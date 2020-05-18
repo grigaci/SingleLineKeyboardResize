@@ -23,7 +23,6 @@ extension UIViewController {
     private struct SingleLineKeyboardResizeKeys {
         static var ScrollViewKey = "single_line_scroll_view_key"
         static var ScrollViewContentInsetsKey = "single_line_content_insets_key"
-        static var ScrollContentInsetsKey = "single_line_content_insets_key"
         static var ScrollIndicatorInsetsKey = "single_line_indicator_insets_key"
     }
     
