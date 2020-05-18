@@ -7,8 +7,6 @@
 
 import UIKit
 
-private var scrollViewKey : UInt8 = 0
-
 extension UIViewController {
     
     public func setupKeyboardNotifcationListenerForScrollView(_ scrollView: UIScrollView) {
@@ -22,12 +20,45 @@ extension UIViewController {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
+    private struct SingleLineKeyboardResizeKeys {
+        static var ScrollViewKey = "single_line_scroll_view_key"
+        static var ScrollViewContentInsetsKey = "single_line_content_insets_key"
+        static var ScrollContentInsetsKey = "single_line_content_insets_key"
+        static var ScrollIndicatorInsetsKey = "single_line_indicator_insets_key"
+    }
+    
     fileprivate var internalScrollView: UIScrollView! {
         get {
-            return objc_getAssociatedObject(self, &scrollViewKey) as? UIScrollView
+            return objc_getAssociatedObject(self, &SingleLineKeyboardResizeKeys.ScrollViewKey) as? UIScrollView
         }
         set(newValue) {
-            objc_setAssociatedObject(self, &scrollViewKey, newValue, .OBJC_ASSOCIATION_ASSIGN)
+            objc_setAssociatedObject(self, &SingleLineKeyboardResizeKeys.ScrollViewKey, newValue, .OBJC_ASSOCIATION_ASSIGN)
+        }
+    }
+    
+    fileprivate var internalScrollViewContentInsets: UIEdgeInsets {
+        get {
+            if let value = objc_getAssociatedObject(self, &SingleLineKeyboardResizeKeys.ScrollViewContentInsetsKey) as? NSValue {
+                return value.uiEdgeInsetsValue
+            }
+            return .zero
+        }
+        set(newValue) {
+            let value = NSValue.init(uiEdgeInsets: newValue)
+            objc_setAssociatedObject(self, &SingleLineKeyboardResizeKeys.ScrollViewContentInsetsKey, value, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+    
+    fileprivate var internalScrollViewIndicatorInsets: UIEdgeInsets {
+        get {
+            if let value = objc_getAssociatedObject(self, &SingleLineKeyboardResizeKeys.ScrollIndicatorInsetsKey) as? NSValue {
+                return value.uiEdgeInsetsValue
+            }
+            return .zero
+        }
+        set(newValue) {
+            let value = NSValue.init(uiEdgeInsets: newValue)
+            objc_setAssociatedObject(self, &SingleLineKeyboardResizeKeys.ScrollIndicatorInsetsKey, value, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
     }
     
@@ -39,6 +70,8 @@ extension UIViewController {
         let options = UIView.AnimationOptions.beginFromCurrentState
         UIView.animate(withDuration: animationDuration, delay: 0, options:options, animations: { () -> Void in
             let insetHeight = (self.internalScrollView.frame.height + self.internalScrollView.frame.origin.y) - keyboardFrameConvertedToViewFrame.origin.y
+            self.internalScrollViewContentInsets = self.internalScrollView.contentInset
+            self.internalScrollViewIndicatorInsets = self.internalScrollView.scrollIndicatorInsets
             self.internalScrollView.contentInset = UIEdgeInsets.init(top: 0, left: 0, bottom: insetHeight, right: 0)
             self.internalScrollView.scrollIndicatorInsets  = UIEdgeInsets.init(top: 0, left: 0, bottom: insetHeight, right: 0)
             }) { (complete) -> Void in
@@ -50,8 +83,8 @@ extension UIViewController {
         let animationDuration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as! TimeInterval
         let options = UIView.AnimationOptions.beginFromCurrentState
         UIView.animate(withDuration: animationDuration, delay: 0, options:options, animations: { () -> Void in
-            self.internalScrollView.contentInset = UIEdgeInsets.init(top: 0, left: 0, bottom: 0, right: 0)
-            self.internalScrollView.scrollIndicatorInsets  = UIEdgeInsets.init(top: 0, left: 0, bottom: 0, right: 0)
+            self.internalScrollView.contentInset = self.internalScrollViewContentInsets
+            self.internalScrollView.scrollIndicatorInsets  = self.internalScrollViewIndicatorInsets
             }) { (complete) -> Void in
         }
     }
